@@ -66,9 +66,20 @@ Five representative specs illustrate the layered style (names neutralized; no in
 | `tests/smoke/edit_request.spec.ts` | Тест редактирования заявки | End-to-end request edit after API setup |
 | `tests/examples/questionnaire_single_answer.spec.ts` | Questionnaire: single-answer questions | Multi-step questionnaire scenario (single-answer types, supplier flow) |
 
+## Transfer / restore
+
+Portable archive (includes `.git`, no `node_modules`):
+
+`../procurement-e2e-showcase-portable.zip`
+
+After unpack: `npm install` (and optionally `npx playwright install chromium`).  
+Do not ship `node_modules`, `e2e.env.json`, or `.auth/`.
+
+`origin` is already set to `https://github.com/skatoy/defeat_auto_test_tutorial.git` for a later push (GitHub auth required; `--force` only if you intend to overwrite that repo’s `main`).
+
 ## Setup
 
-1. **Clone or copy** this folder locally (showcase is isolated from the source repo).
+1. **Clone, copy, or unzip** this folder locally (showcase is isolated from the source repo).
 
 2. **Create local credentials file** (never commit):
 
