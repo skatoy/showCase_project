@@ -1,107 +1,96 @@
-# Procurement E2E Showcase
+# Showcase E2E-автотестов закупок
 
-Enterprise Playwright + TypeScript end-to-end framework for a B2B procurement platform — presented as a **sanitized architectural portfolio**.
+Корпоративный end-to-end фреймворк на **Playwright + TypeScript** для B2B-платформы закупок — представлен как **очищенное архитектурное портфолио**.
 
-> **Disclaimer — NDA / showcase only**
+> **Важно — NDA / только showcase**
 >
-> This repository was developed in an **NDA enterprise context**. It is a **curated, brand-neutral subset** of a private production test suite, not a runnable product clone.
+> Репозиторий создан в **корпоративном NDA-контексте**. Это **курируемое, нейтральное по бренду подмножество** закрытого продакшен-набора тестов, а не готовый к запуску клон продукта.
 >
-> - Hostnames, product names, credentials, and internal identifiers have been **sanitized or replaced with placeholders**.
-> - Default URLs point to `https://example.test` — tests are **not expected to pass** without access to a private stand and real `e2e.env.json`.
-> - The goal is to demonstrate **framework architecture and patterns**, not green CI against a public demo app.
+> - Хосты, названия продукта, учётные данные и внутренние идентификаторы **обезличены или заменены на заглушки**.
+> - URL по умолчанию указывают на `https://example.test` — тесты **не рассчитаны на прохождение** без доступа к закрытому стенду и реального `e2e.env.json`.
+> - Цель — показать **архитектуру фреймворка и паттерны**, а не зелёный CI против публичного демо.
 
-## Stack & patterns
+## Стек и паттерны
 
-| Area | Choice |
-|------|--------|
+| Область | Выбор |
+|---------|--------|
 | Runtime | Node.js 22+, TypeScript, ES modules |
-| Test runner | [Playwright](https://playwright.dev/) (Desktop Chrome, `data-cy` test ids) |
-| Reporting | Allure (`allure-playwright`, `allurerc.mjs`) |
-| Tooling | ESLint, Prettier, `tsc --build` |
+| Тест-раннер | [Playwright](https://playwright.dev/) (Desktop Chrome, `data-cy` test ids) |
+| Отчёты | Allure (`allure-playwright`, `allurerc.mjs`) |
+| Инструменты | ESLint, Prettier, `tsc --build` |
 
-**Patterns demonstrated in this showcase:**
+**Паттерны, которые демонстрирует showcase:**
 
-- **Page Object Model (POM)** — UI interactions encapsulated in `pageObjects/` and reusable `components/`.
-- **Business Logic layer** — multi-step domain flows (create/edit procedure, create/edit request) orchestrated in `BusinessLogic/`, keeping specs thin.
-- **API + UI hybrid** — setup and assertions via `api/` helpers; UI validation via POM (e.g. procedure created via API, edited via browser).
-- **storageState auth** — dedicated setup projects persist session cookies to `.auth/`; main specs reuse pre-authenticated contexts.
-- **Allure steps** — structured reporting with suite titles and step hierarchy.
-- **Multi-env config** — `TEST_ENV` (`local` \| `staging` \| `demo`) with `BASE_URL`, `BASE_ADMIN_URL`, and `OIDC_CLIENT_ID` from environment variables.
+- **Page Object Model (POM)** — UI-взаимодействия в `pageObjects/` и переиспользуемых `components/`.
+- **Слой Business Logic** — многошаговые доменные сценарии (создание/редактирование процедуры и заявки) в `BusinessLogic/`, спеки остаются тонкими.
+- **Гибрид API + UI** — подготовка и проверки через `api/`, валидация UI через POM (например, процедура создаётся через API, правится в браузере).
+- **Авторизация через storageState** — setup-проекты сохраняют cookies в `.auth/`; основные спеки переиспользуют уже авторизованные контексты.
+- **Allure steps** — структурированные отчёты с иерархией suite и шагов.
+- **Мульти-окружения** — `TEST_ENV` (`local` \| `staging` \| `demo`) с `BASE_URL`, `BASE_ADMIN_URL` и `OIDC_CLIENT_ID` из переменных окружения.
 
-## Architecture
+## Архитектура
 
 ```
-tests/                    # Specs + auth setup projects
-├── 0_auth.setup.ts       # User SSO session → .auth/
-├── 0_auth_admin.setup.ts # Admin session → .auth/
-├── smoke/                # Core CRUD smoke flows
-└── examples/             # Extended multi-step scenario
+tests/                    # Спеки + проекты auth setup
+├── 0_auth.setup.ts       # SSO-сессия пользователя → .auth/
+├── 0_auth_admin.setup.ts # Сессия админа → .auth/
+├── smoke/                # Базовые CRUD smoke-сценарии
+└── examples/             # Расширенный многошаговый пример
 
-BusinessLogic/            # Domain orchestration (create/edit flows)
-pageObjects/              # Page Object classes per screen/modal
-api/                      # HTTP clients (auth, procedure creation, …)
-components/               # Shared UI widgets (date input, notifications, …)
-fixtures/                 # Custom Playwright fixtures (e.g. apiAs)
-factories/                # Step builders and test data factories
-testData/                 # Default payloads and typed data models
-utils/                    # Auth helpers, page state, setup paths
-constants/                # Shared constants
-files/                    # Static upload fixtures
-vendor/                   # Vendored dependencies (xlsx)
+BusinessLogic/            # Оркестрация доменных сценариев
+pageObjects/              # Page Object-классы экранов и модалок
+api/                      # HTTP-клиенты (auth, создание процедуры, …)
+components/               # Общие UI-виджеты (дата, уведомления, …)
+fixtures/                 # Кастомные Playwright fixtures (например apiAs)
+factories/                # Сборщики шагов и тестовых данных
+testData/                 # Дефолтные payload и типизированные модели
+utils/                    # Auth-хелперы, состояние страницы, пути setup
+constants/                # Общие константы
+files/                    # Статические файлы для upload
+vendor/                   # Вендорные зависимости (xlsx)
 ```
 
-**Call flow:** `tests` → `BusinessLogic` → `pageObjects` / `api` → `fixtures` / `utils`
+**Цепочка вызовов:** `tests` → `BusinessLogic` → `pageObjects` / `api` → `fixtures` / `utils`
 
-Auth setup runs as Playwright **projects** (`user_setup`, `admin_setup`) that main specs depend on; see `playwright.config.ts`.
+Auth setup выполняется как Playwright **projects** (`user_setup`, `admin_setup`), от которых зависят основные спеки; см. `playwright.config.ts`.
 
-## Included examples
+## Примеры в репозитории
 
-Five representative specs illustrate the layered style (names neutralized; no internal TMS ids):
+Пять репрезентативных спеков показывают слоистый стиль (имена нейтрализованы; без внутренних TMS id):
 
-| Spec | Suite | What it shows |
-|------|-------|---------------|
-| `tests/smoke/create_procedure.spec.ts` | Тест создания закупки | Full UI create flow via `BusinessLogic`, custom test data, questionnaire |
-| `tests/smoke/create_request.spec.ts` | Тест заполнения заявки | API procedure prep + supplier request submission (API + UI hybrid) |
-| `tests/smoke/edit_procedure.spec.ts` | Тест создания и редактирования закупки | API create, UI edit (positions, dates, overview assertions) |
-| `tests/smoke/edit_request.spec.ts` | Тест редактирования заявки | End-to-end request edit after API setup |
-| `tests/examples/questionnaire_single_answer.spec.ts` | Questionnaire: single-answer questions | Multi-step questionnaire scenario (single-answer types, supplier flow) |
+| Спека | Сьют | Что показывает |
+|-------|------|----------------|
+| `tests/smoke/create_procedure.spec.ts` | Тест создания закупки | Полный UI-сценарий создания через `BusinessLogic`, кастомные данные, анкета |
+| `tests/smoke/create_request.spec.ts` | Тест заполнения заявки | Подготовка процедуры через API + подача заявки поставщиком (гибрид API + UI) |
+| `tests/smoke/edit_procedure.spec.ts` | Тест создания и редактирования закупки | Создание через API, правка в UI (позиции, даты, overview) |
+| `tests/smoke/edit_request.spec.ts` | Тест редактирования заявки | End-to-end правка заявки после API-подготовки |
+| `tests/examples/questionnaire_single_answer.spec.ts` | Questionnaire: single-answer questions | Многошаговая анкета (вопросы с одним ответом, поток поставщика) |
 
-## Transfer / restore
+## Установка
 
-Portable archive (includes `.git`, no `node_modules`):
+1. **Клонируйте** репозиторий локально.
 
-`../procurement-e2e-showcase-portable.zip`
-
-After unpack: `npm install` (and optionally `npx playwright install chromium`).  
-Do not ship `node_modules`, `e2e.env.json`, or `.auth/`.
-
-`origin` is already set to `https://github.com/skatoy/defeat_auto_test_tutorial.git` for a later push (GitHub auth required; `--force` only if you intend to overwrite that repo’s `main`).
-
-## Setup
-
-1. **Clone, copy, or unzip** this folder locally (showcase is isolated from the source repo).
-
-2. **Create local credentials file** (never commit):
+2. **Создайте файл с учётными данными** (не коммитьте):
 
    ```bash
    cp e2e.env.example.json e2e.env.json
    ```
 
-   Edit `e2e.env.json` with stand-specific URLs and roles if you have access to a private environment. The example file uses **fake** emails and passwords only.
+   Отредактируйте `e2e.env.json` под ваш стенд, если есть доступ. В примере — только **фиктивные** email и пароли.
 
-3. **Install dependencies** (public npm registry; no private `.npmrc` required):
+3. **Установите зависимости** (публичный npm, без приватного `.npmrc`):
 
    ```bash
    npm install
    ```
 
-4. **Install browser** (Chromium channel used by config):
+4. **Установите браузер** (канал Chromium из конфига):
 
    ```bash
    npx playwright install chromium
    ```
 
-5. **Optional — environment overrides** for a real stand:
+5. **Опционально — переменные окружения** для реального стенда:
 
    ```bash
    export TEST_ENV=local
@@ -110,30 +99,32 @@ Do not ship `node_modules`, `e2e.env.json`, or `.auth/`.
    export OIDC_CLIENT_ID=procurement-demo
    ```
 
-## Commands
+## Команды
 
-| Command | Purpose |
-|---------|---------|
-| `npm run type-check` | TypeScript project build / type validation |
+| Команда | Назначение |
+|---------|------------|
+| `npm run type-check` | Проверка типов TypeScript |
 | `npm run lint` | ESLint |
-| `npm run fmt` | Prettier format |
-| `npm run test:smoke` | Run smoke specs (requires live stand + `e2e.env.json`) |
-| `npm run test:examples` | Run example specs (same requirement) |
-| `npm run auth:clear` | Remove cached `.auth/` session files |
-| `npm run allure:generate` | Generate Allure report from `allure-results/` |
-| `npm run allure:open` | Open generated Allure report |
+| `npm run fmt` | Форматирование Prettier |
+| `npm run test:smoke` | Smoke-спеки (нужен живой стенд + `e2e.env.json`) |
+| `npm run test:examples` | Example-спеки (те же требования) |
+| `npm run auth:clear` | Удалить кэш сессий `.auth/` |
+| `npm run allure:generate` | Собрать Allure-отчёт из `allure-results/` |
+| `npm run allure:open` | Открыть сгенерированный Allure-отчёт |
 
-**Note:** E2E commands assume a **private procurement stand** and valid credentials. For portfolio review, `type-check` and `lint` are the intended static gates; do not expect `test:*` to pass against default `example.test` placeholders.
+**Примечание:** E2E-команды рассчитаны на **закрытый стенд закупок** и валидные учётные данные. Для просмотра портфолио достаточно `type-check` и `lint`; не ожидайте прохождения `test:*` на заглушках `example.test`.
 
-## What was removed
+## Что убрано
 
-To keep this artifact focused and safe to share, the following from the full production suite were **omitted**:
+Чтобы артефакт оставался сфокусированным и безопасным для публикации, из полного продакшен-набора **исключено**:
 
-- **Full regression packs** — billing, notifications, chats, auto-choice winners, requirements/questionnaires bulk suites, and 70+ ticket-linked specs
-- **Product notification templates** — `notificationTemplates/` and related copy-heavy assets
-- **Private registry config** — `.npmrc` / Nexus URLs (dependencies resolve from public npm)
-- **Secrets and runtime artifacts** — `e2e.env.json`, `.auth/`, Allure/HTML report outputs, `node_modules/`
-- **Internal tooling** — Husky hooks, CI job definitions, Postman collections, branch-specific docs
-- **Company branding** — product names, SSO brand strings, and internal hostnames replaced with neutral placeholders (see sanitization in repo history)
+- **Полные регрессионные пакеты** — биллинг, уведомления, чаты, автовыбор победителей, массовые анкеты и 70+ спек по тикетам
+- **Шаблоны продуктовых уведомлений** — `notificationTemplates/` и связанные тексты
+- **Конфиг приватного registry** — `.npmrc` / Nexus (зависимости ставятся с публичного npm)
+- **Секреты и runtime-артефакты** — `e2e.env.json`, `.auth/`, отчёты Allure/HTML, `node_modules/`
+- **Внутренний tooling** — Husky, CI, Postman-коллекции, ветко-специфичная документация
+- **Брендинг компании** — названия продукта, SSO-строки и внутренние хосты заменены нейтральными заглушками
 
-The remaining code is the **minimal dependency closure** for the five curated examples plus auth setup.
+Оставшийся код — **минимальный замыкание зависимостей** для пяти курируемых примеров и auth setup.
+
+Старые учебные Python/pytest-файлы из этого репозитория удалены: showcase содержит только Playwright + TypeScript.
