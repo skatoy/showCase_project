@@ -1,115 +1,97 @@
-# Showcase E2E-автотестов закупок
+# Playwright E2E Framework — B2B-закупки
 
-Корпоративный end-to-end фреймворк на **Playwright + TypeScript** для B2B-платформы закупок — представлен как **очищенное архитектурное портфолио**.
+Портфолио-showcase корпоративного end-to-end фреймворка на **Playwright + TypeScript**.
 
-> **Важно — NDA / только showcase**
->
-> Репозиторий создан в **корпоративном NDA-контексте**. Это **курируемое, нейтральное по бренду подмножество** закрытого продакшен-набора тестов, а не готовый к запуску клон продукта.
->
-> - Хосты, названия продукта, учётные данные и внутренние идентификаторы **обезличены или заменены на заглушки**.
-> - URL по умолчанию указывают на `https://example.test` — тесты **не рассчитаны на прохождение** без доступа к закрытому стенду и реального `e2e.env.json`.
-> - Цель — показать **архитектуру фреймворка и паттерны**, а не зелёный CI против публичного демо.
+Цель репозитория — показать, как я выстраиваю **слоистую архитектуру автотестов** для сложного B2B-продукта: тонкие спеки, доменная оркестрация, Page Object Model, гибрид API+UI и переиспользуемая авторизация.
 
-## Стек и паттерны
+> Смотреть код важнее, чем запускать тесты: без закрытого стенда E2E не пройдут. Для проверки структуры достаточно `npm run type-check` и `npm run lint`.
+
+## Зачем смотреть
+
+| Что демонстрирую | Где в коде |
+|------------------|------------|
+| Тонкие спеки + Allure | `tests/smoke/`, `tests/examples/` |
+| Доменные сценарии (не UI-клики в тесте) | `BusinessLogic/` |
+| Page Object Model + переиспользуемые виджеты | `pageObjects/`, `components/` |
+| Гибрид API-подготовки и UI-проверок | `api/` + smoke edit-спеки |
+| Auth через Playwright `storageState` | `tests/0_auth*.setup.ts`, `utils/setupConfig.ts` |
+| Типизированные тестовые данные | `testData/`, `factories/` |
+
+## Как смотреть за 5 минут
+
+1. [`tests/smoke/create_procedure.spec.ts`](tests/smoke/create_procedure.spec.ts) — как выглядит спека: данные → вызов Business Logic → Allure.
+2. [`BusinessLogic/CreateProcedure.ts`](BusinessLogic/CreateProcedure.ts) и [`BusinessLogic/Procedure/`](BusinessLogic/Procedure/) — оркестрация доменного сценария.
+3. [`pageObjects/Procedure/`](pageObjects/Procedure/) — POM по экранам и вкладкам.
+4. [`tests/0_auth.setup.ts`](tests/0_auth.setup.ts) — setup-проект и сохранение сессии.
+5. [`playwright.config.ts`](playwright.config.ts) — projects, зависимости setup → smoke/examples.
+
+## Стек
 
 | Область | Выбор |
 |---------|--------|
 | Runtime | Node.js 22+, TypeScript, ES modules |
-| Тест-раннер | [Playwright](https://playwright.dev/) (Desktop Chrome, `data-cy` test ids) |
-| Отчёты | Allure (`allure-playwright`, `allurerc.mjs`) |
-| Инструменты | ESLint, Prettier, `tsc --build` |
-
-**Паттерны, которые демонстрирует showcase:**
-
-- **Page Object Model (POM)** — UI-взаимодействия в `pageObjects/` и переиспользуемых `components/`.
-- **Слой Business Logic** — многошаговые доменные сценарии (создание/редактирование процедуры и заявки) в `BusinessLogic/`, спеки остаются тонкими.
-- **Гибрид API + UI** — подготовка и проверки через `api/`, валидация UI через POM (например, процедура создаётся через API, правится в браузере).
-- **Авторизация через storageState** — setup-проекты сохраняют cookies в `.auth/`; основные спеки переиспользуют уже авторизованные контексты.
-- **Allure steps** — структурированные отчёты с иерархией suite и шагов.
-- **Мульти-окружения** — `TEST_ENV` (`local` \| `staging` \| `demo`) с `BASE_URL`, `BASE_ADMIN_URL` и `OIDC_CLIENT_ID` из переменных окружения.
+| Тест-раннер | [Playwright](https://playwright.dev/) (Desktop Chrome, `data-cy`) |
+| Отчёты | Allure (`allure-playwright`) |
+| Качество кода | ESLint, Prettier, `tsc --build` |
 
 ## Архитектура
 
 ```
-tests/                    # Спеки + проекты auth setup
-├── 0_auth.setup.ts       # SSO-сессия пользователя → .auth/
-├── 0_auth_admin.setup.ts # Сессия админа → .auth/
-├── smoke/                # Базовые CRUD smoke-сценарии
-└── examples/             # Расширенный многошаговый пример
-
-BusinessLogic/            # Оркестрация доменных сценариев
-pageObjects/              # Page Object-классы экранов и модалок
-api/                      # HTTP-клиенты (auth, создание процедуры, …)
-components/               # Общие UI-виджеты (дата, уведомления, …)
-fixtures/                 # Кастомные Playwright fixtures (например apiAs)
-factories/                # Сборщики шагов и тестовых данных
-testData/                 # Дефолтные payload и типизированные модели
-utils/                    # Auth-хелперы, состояние страницы, пути setup
-constants/                # Общие константы
-files/                    # Статические файлы для upload
-vendor/                   # Вендорные зависимости (xlsx)
+tests/            # спеки + auth setup
+BusinessLogic/    # доменные сценарии (create/edit procedure & request)
+pageObjects/      # экраны и вкладки
+api/              # HTTP-клиенты для подготовки данных
+components/       # общие UI-виджеты
+fixtures/         # кастомные Playwright fixtures
+factories/        # сборщики шагов и данных
+testData/         # типизированные payload
+utils/            # auth, page state, конфиг setup
 ```
 
-**Цепочка вызовов:** `tests` → `BusinessLogic` → `pageObjects` / `api` → `fixtures` / `utils`
+**Цепочка:** `tests` → `BusinessLogic` → `pageObjects` / `api` → `fixtures` / `utils`
 
-Auth setup выполняется как Playwright **projects** (`user_setup`, `admin_setup`), от которых зависят основные спеки; см. `playwright.config.ts`.
+Спека не знает селекторов экрана. Business Logic не знает деталей HTTP. API и POM переиспользуются между сценариями.
 
 ## Примеры в репозитории
 
-Пять репрезентативных спеков показывают слоистый стиль (имена нейтрализованы; без внутренних TMS id):
+| Спека | Что показывает |
+|-------|----------------|
+| [`create_procedure.spec.ts`](tests/smoke/create_procedure.spec.ts) | Полный UI-сценарий создания закупки через Business Logic |
+| [`create_request.spec.ts`](tests/smoke/create_request.spec.ts) | API-подготовка процедуры + заявка поставщика (гибрид) |
+| [`edit_procedure.spec.ts`](tests/smoke/edit_procedure.spec.ts) | Создание через API, правка в UI |
+| [`edit_request.spec.ts`](tests/smoke/edit_request.spec.ts) | End-to-end редактирование заявки |
+| [`questionnaire_single_answer.spec.ts`](tests/examples/questionnaire_single_answer.spec.ts) | Многошаговая анкета |
 
-| Спека | Сьют | Что показывает |
-|-------|------|----------------|
-| `tests/smoke/create_procedure.spec.ts` | Тест создания закупки | Полный UI-сценарий создания через `BusinessLogic`, кастомные данные, анкета |
-| `tests/smoke/create_request.spec.ts` | Тест заполнения заявки | Подготовка процедуры через API + подача заявки поставщиком (гибрид API + UI) |
-| `tests/smoke/edit_procedure.spec.ts` | Тест создания и редактирования закупки | Создание через API, правка в UI (позиции, даты, overview) |
-| `tests/smoke/edit_request.spec.ts` | Тест редактирования заявки | End-to-end правка заявки после API-подготовки |
-| `tests/examples/questionnaire_single_answer.spec.ts` | Questionnaire: single-answer questions | Многошаговая анкета (вопросы с одним ответом, поток поставщика) |
+## Быстрый старт (статическая проверка)
 
-## Установка
+```bash
+npm install
+npm run type-check
+npm run lint
+```
 
-1. **Клонируйте** репозиторий локально.
+Этого достаточно для ревью портфолио.
 
-2. **Создайте файл с учётными данными** (не коммитьте):
+### E2E (нужен закрытый стенд)
 
-   ```bash
-   cp e2e.env.example.json e2e.env.json
-   ```
-
-   Отредактируйте `e2e.env.json` под ваш стенд, если есть доступ. В примере — только **фиктивные** email и пароли.
-
-3. **Установите зависимости** (публичный npm, без приватного `.npmrc`):
-
-   ```bash
-   npm install
-   ```
-
-4. **Установите браузер** (канал Chromium из конфига):
-
-   ```bash
-   npx playwright install chromium
-   ```
-
-5. **Опционально — переменные окружения** для реального стенда:
-
-   ```bash
-   export TEST_ENV=local
-   export BASE_URL=https://your-stand.example/
-   export BASE_ADMIN_URL=https://admin.your-stand.example/
-   export OIDC_CLIENT_ID=procurement-demo
-   ```
-
-## Команды
+```bash
+cp e2e.env.example.json e2e.env.json   # подставить реальные URL/учётные данные
+npx playwright install chromium
+npm run test:smoke
+```
 
 | Команда | Назначение |
 |---------|------------|
-| `npm run type-check` | Проверка типов TypeScript |
-| `npm run lint` | ESLint |
-| `npm run fmt` | Форматирование Prettier |
-| `npm run test:smoke` | Smoke-спеки (нужен живой стенд + `e2e.env.json`) |
-| `npm run test:examples` | Example-спеки (те же требования) |
-| `npm run auth:clear` | Удалить кэш сессий `.auth/` |
-| `npm run allure:generate` | Собрать Allure-отчёт из `allure-results/` |
-| `npm run allure:open` | Открыть сгенерированный Allure-отчёт |
+| `npm run test:smoke` | Smoke-спеки |
+| `npm run test:examples` | Расширенный пример |
+| `npm run auth:clear` | Сбросить `.auth/` |
+| `npm run allure:generate` / `allure:open` | Отчёт Allure |
+| `npm run fmt` | Prettier |
 
-**Примечание:** E2E-команды рассчитаны на **закрытый стенд закупок** и валидные учётные данные. Для просмотра портфолио достаточно `type-check` и `lint`; не ожидайте прохождения `test:*` на заглушках `example.test`.
+## NDA / ограничения
+
+Репозиторий — **курируемое, обезличенное подмножество** корпоративного набора тестов:
+
+- хосты, бренды и секреты заменены заглушками;
+- URL по умолчанию — `https://example.test`;
+- цель — архитектура и паттерны, а не зелёный CI на публичном демо.
