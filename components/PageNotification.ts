@@ -11,9 +11,10 @@ export class PageNotification {
     this.warningNotification = page.getByTestId('notification-text')
   }
 
-  async getNotificationText(locator: Locator) {
+  async getNotificationText() {
     return await this.locator.textContent()
   }
+
   async getWarningNotificationText() {
     return await this.warningNotification.textContent()
   }

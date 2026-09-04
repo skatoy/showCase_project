@@ -1,29 +1,30 @@
 # Playwright E2E Framework — B2B-закупки
 
-Портфолио-showcase корпоративного end-to-end фреймворка на **Playwright + TypeScript**.
+Портфолио-showcase корпоративного end-to-end фреймворка на **Playwright + TypeScript** для автоматизации тестирования B2B-платформы закупок.
 
-Цель репозитория — показать, как я выстраиваю **слоистую архитектуру автотестов** для сложного B2B-продукта: тонкие спеки, доменная оркестрация, Page Object Model, гибрид API+UI и переиспользуемая авторизация.
+Репозиторий показывает, как я выстраиваю **слоистую архитектуру автотестов**: тонкие спеки, доменная оркестрация, Page Object Model, гибрид API+UI и переиспользуемая авторизация через `storageState`.
 
-> Смотреть код важнее, чем запускать тесты: без закрытого стенда E2E не пройдут. Для проверки структуры достаточно `npm run type-check` и `npm run lint`.
+> Смотреть код важнее, чем запускать тесты: без закрытого стенда E2E не пройдут. Для ревью портфолио достаточно `npm run type-check` и `npm run lint`.
 
 ## Зачем смотреть
 
 | Что демонстрирую | Где в коде |
 |------------------|------------|
-| Тонкие спеки + Allure | `tests/smoke/`, `tests/examples/` |
-| Доменные сценарии (не UI-клики в тесте) | `BusinessLogic/` |
-| Page Object Model + переиспользуемые виджеты | `pageObjects/`, `components/` |
-| Гибрид API-подготовки и UI-проверок | `api/` + smoke edit-спеки |
-| Auth через Playwright `storageState` | `tests/0_auth*.setup.ts`, `utils/setupConfig.ts` |
-| Типизированные тестовые данные | `testData/`, `factories/` |
+| Тонкие спеки + Allure | [`tests/smoke/`](tests/smoke/), [`tests/examples/`](tests/examples/) |
+| Доменные сценарии без UI-кликов в тесте | [`BusinessLogic/`](BusinessLogic/) |
+| Page Object Model + переиспользуемые виджеты | [`pageObjects/`](pageObjects/), [`components/`](components/) |
+| Гибрид API-подготовки и UI-проверок | [`api/`](api/), edit/create request-спеки |
+| Auth через Playwright projects + `storageState` | [`tests/0_auth.setup.ts`](tests/0_auth.setup.ts), [`utils/setupConfig.ts`](utils/setupConfig.ts) |
+| Типизированные данные и фабрики шагов | [`testData/`](testData/), [`factories/`](factories/) |
+| Мульти-окружения | `TEST_ENV` / `BASE_URL` в [`playwright.config.ts`](playwright.config.ts) |
 
 ## Как смотреть за 5 минут
 
-1. [`tests/smoke/create_procedure.spec.ts`](tests/smoke/create_procedure.spec.ts) — как выглядит спека: данные → вызов Business Logic → Allure.
-2. [`BusinessLogic/CreateProcedure.ts`](BusinessLogic/CreateProcedure.ts) и [`BusinessLogic/Procedure/`](BusinessLogic/Procedure/) — оркестрация доменного сценария.
+1. [`tests/smoke/create_procedure.spec.ts`](tests/smoke/create_procedure.spec.ts) — спека: данные → Business Logic → Allure.
+2. [`BusinessLogic/CreateProcedure.ts`](BusinessLogic/CreateProcedure.ts) → [`BusinessLogic/Procedure/`](BusinessLogic/Procedure/) — оркестрация доменного сценария.
 3. [`pageObjects/Procedure/`](pageObjects/Procedure/) — POM по экранам и вкладкам.
-4. [`tests/0_auth.setup.ts`](tests/0_auth.setup.ts) — setup-проект и сохранение сессии.
-5. [`playwright.config.ts`](playwright.config.ts) — projects, зависимости setup → smoke/examples.
+4. [`tests/smoke/create_request.spec.ts`](tests/smoke/create_request.spec.ts) — гибрид: API создаёт закупку, UI заполняет заявку.
+5. [`tests/0_auth.setup.ts`](tests/0_auth.setup.ts) + [`playwright.config.ts`](playwright.config.ts) — setup-проекты и зависимости `user_setup` / `admin_setup` → `main`.
 
 ## Стек
 
@@ -50,7 +51,9 @@ utils/            # auth, page state, конфиг setup
 
 **Цепочка:** `tests` → `BusinessLogic` → `pageObjects` / `api` → `fixtures` / `utils`
 
-Спека не знает селекторов экрана. Business Logic не знает деталей HTTP. API и POM переиспользуются между сценариями.
+- Спека описывает сценарий и данные, а не селекторы.
+- Селекторы живут в POM / components.
+- API используется для быстрой подготовки состояния; UI — для проверки пользовательского потока.
 
 ## Примеры в репозитории
 
@@ -64,6 +67,8 @@ utils/            # auth, page state, конфиг setup
 
 ## Быстрый старт (статическая проверка)
 
+Требуется **Node.js 22+**.
+
 ```bash
 npm install
 npm run type-check
@@ -76,7 +81,7 @@ npm run lint
 
 ```bash
 cp e2e.env.example.json e2e.env.json   # подставить реальные URL/учётные данные
-npx playwright install chromium
+npx playwright install chrome          # в конфиге channel: 'chrome'
 npm run test:smoke
 ```
 
