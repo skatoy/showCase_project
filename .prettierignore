@@ -1,0 +1,4 @@
+node_modules
+.dist
+
+src/route-map.d.ts
