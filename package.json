@@ -1,0 +1,43 @@
+{
+  "name": "procurement-e2e-showcase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sanitized architectural showcase of an enterprise Playwright E2E framework for a B2B procurement platform (NDA context).",
+  "scripts": {
+    "type-check": "tsc --build",
+    "lint": "eslint . --cache",
+    "fmt": "prettier --write --experimental-cli .",
+    "auth:clear": "node --input-type=module -e \"import('node:fs').then(fs => fs.rmSync('.auth',{recursive:true,force:true}))\"",
+    "test:smoke": "cross-env TEST_TYPE=smoke playwright test tests/smoke",
+    "test:examples": "cross-env TEST_TYPE=examples playwright test tests/examples",
+    "allure:generate": "allure generate ./allure-results",
+    "allure:open": "allure open ./allure-report"
+  },
+  "dependencies": {
+    "luxon": "^3.7.2",
+    "nanoid": "^5.1.11",
+    "xlsx": "file:vendor/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.54.2",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@tsconfig/node22": "^22.0.5",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^25.9.5",
+    "allure": "^3.15.0",
+    "allure-js-commons": "^3.10.2",
+    "allure-playwright": "^3.10.2",
+    "cross-env": "^10.1.0",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-de-morgan": "^2.1.3",
+    "eslint-plugin-playwright": "^2.10.5",
+    "globals": "^17.7.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0"
+  }
+}
